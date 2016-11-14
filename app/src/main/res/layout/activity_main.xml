@@ -16,17 +16,21 @@
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
     <com.nhancv.nchip.NChip
         android:id="@+id/chipText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:chipEnableEdit_="false"
+        android:paddingLeft="0dp"
+        app:chipEditPaddingLeft_="0dp"
+        app:chipEnableEdit_="true"
         app:chipInitFocus_="true"
-        app:chipInitHint_="Please input dsfasdfasdf"
+        app:chipInitHint_="Please input"
         app:chipLayoutDrawable_="@drawable/edittext_theme_landing_page"
-        app:chipPadding_="4dp"
+        app:chipPadding_="2dp"
+        app:chipSplitFlag_=",*#*,"
         app:chipTextColor_="#ffffff"
-        app:chipTextPadding_="2dp"
+        app:chipTextPadding_="3dp"
         app:editTextColor_="#000000"
         app:labelPosition_="left"
         app:textSize_="14sp"

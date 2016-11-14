@@ -37,7 +37,8 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
     private int mGravity = (isIcs() ? Gravity.START : Gravity.LEFT) | Gravity.TOP;
     private float textSize, chipTextPadding, chipPadding, chipPaddingLeft, chipPaddingRight,
             chipPaddingTop, chipPaddingBottom, chipTextPaddingLeft, chipTextPaddingRight,
-            chipTextPaddingTop, chipTextPaddingBottom;
+            chipTextPaddingTop, chipTextPaddingBottom, chipEditPadding, chipEditPaddingTop,
+            chipEditPaddingBottom, chipEditPaddingLeft, chipEditPaddingRight;
     private NChip nchip;
     private Context context;
     private boolean showDeleteButton, showKeyboardInFocus, autoSplitInActionKey, initFocus, chipEnableEdit;
@@ -90,6 +91,12 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
         chipPaddingRight = a_.getDimension(R.styleable.nchip_layout_chipPaddingRight_, 0);
         chipPaddingTop = a_.getDimension(R.styleable.nchip_layout_chipPaddingTop_, 0);
         chipPaddingBottom = a_.getDimension(R.styleable.nchip_layout_chipPaddingBottom_, 0);
+
+        chipEditPadding = a_.getDimension(R.styleable.nchip_layout_chipEditPadding_, 10);
+        chipEditPaddingLeft = a_.getDimension(R.styleable.nchip_layout_chipEditPaddingLeft_, chipEditPadding);
+        chipEditPaddingTop = a_.getDimension(R.styleable.nchip_layout_chipEditPaddingTop_, chipEditPadding);
+        chipEditPaddingRight = a_.getDimension(R.styleable.nchip_layout_chipEditPaddingRight_, chipEditPadding);
+        chipEditPaddingBottom = a_.getDimension(R.styleable.nchip_layout_chipEditPaddingBottom_, chipEditPadding);
 
         if (deleteIcon != null) {
             deleteIcon_ = ((BitmapDrawable) deleteIcon).getBitmap();
@@ -435,7 +442,7 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
         autoCompleteTextView.setBackgroundColor(Color.parseColor("#00FFFFFF"));
         autoCompleteTextView.setLayoutParams(lparamsTextView);
         autoCompleteTextView.setHint(" ");
-        autoCompleteTextView.setPadding(10, 0, 10, 10);
+        autoCompleteTextView.setPadding((int) chipEditPaddingLeft, (int) chipEditPaddingTop, (int) chipEditPaddingRight, (int) chipEditPaddingBottom);
         autoCompleteTextView.setSingleLine(true);
         autoCompleteTextView.setTextColor(editTextColor);
         autoCompleteTextView.setCursorVisible(true);

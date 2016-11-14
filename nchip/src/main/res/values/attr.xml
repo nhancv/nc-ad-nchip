@@ -20,6 +20,13 @@
         <attr name="chipTextPaddingRight_" format="dimension"/>
         <attr name="chipTextPaddingTop_" format="dimension"/>
         <attr name="chipTextPaddingBottom_" format="dimension"/>
+
+        <attr name="chipEditPadding_" format="dimension"/>
+        <attr name="chipEditPaddingTop_" format="dimension"/>
+        <attr name="chipEditPaddingBottom_" format="dimension"/>
+        <attr name="chipEditPaddingLeft_" format="dimension"/>
+        <attr name="chipEditPaddingRight_" format="dimension"/>
+
         <attr name="editTextColor_" format="color" />
         <attr name="chipTextColor_" format="color" />
         <attr name="chipColor_" format="color" />

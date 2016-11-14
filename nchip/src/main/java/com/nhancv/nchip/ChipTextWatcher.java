@@ -73,7 +73,7 @@ public class ChipTextWatcher implements TextWatcher {
             if (text.lastIndexOf(chipSplitFlag) != -1) {
                 EditText editText = (EditText) chip.getChildAt(labelPosition);
                 editText.setTextColor(chipTextColor);
-                String val = text.substring(0, text.length() - 1);
+                String val = text.replace(chipSplitFlag, "");
                 if (val.length() > NChip.MAX_CHARACTER_COUNT) {
                     editText.setText(textToChip(val, true));
                 } else {
