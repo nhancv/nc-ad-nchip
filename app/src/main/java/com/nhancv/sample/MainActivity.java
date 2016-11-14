@@ -8,11 +8,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 
 import com.nhancv.nchip.NChip;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,17 +32,27 @@ public class MainActivity extends AppCompatActivity {
         chip.setAutoSplitInActionKey(false);
         btAddFilter = (Button) findViewById(R.id.btAddFilter);
 
-        String[] countries = {"india", "australia", "austria", "indonesia", "canada"};
+        List<Obj> list = new ArrayList<>();
+        list.add(new Obj(1, "test1"));
+        list.add(new Obj(3, "test2"));
 
-        final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, countries);
+        final ArrayAdapter<Obj> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);
         btAddFilter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 List<String> txtList = chip.getText();
                 if (txtList.size() > 0) {
                     chip.splitText();
+                    adapter.add(new Obj(33, txtList.get(txtList.size() - 1)));
                 }
 
+            }
+        });
+        chip.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.e(TAG, "onItemClick: " + ((Obj) adapterView.getAdapter().getItem(i)).show());
+                adapter.remove((Obj) adapterView.getAdapter().getItem(i));
             }
         });
         chip.addLayoutTextChangedListener(new TextWatcher() {
@@ -60,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
 
                 boolean t = false;
                 for (int i = 0; i < adapter.getCount(); i++) {
-                    if (adapter.getItem(i).startsWith(editable.toString())) {
-                        Log.e(TAG, "find: " + adapter.getItem(i));
+                    if (adapter.getItem(i).name.startsWith(editable.toString())) {
+                        Log.e(TAG, "find: " + adapter.getItem(i).show());
                         t = true;
                         break;
                     }
@@ -73,12 +85,6 @@ public class MainActivity extends AppCompatActivity {
                 }
 
 
-            }
-        });
-        chip.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean b) {
-                Log.e(TAG, "onFocusChange: " + String.valueOf(b));
             }
         });
         chip.setOnChipItemChangeListener(new NChip.ChipItemChangeListener() {
