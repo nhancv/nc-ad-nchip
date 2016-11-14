@@ -12,15 +12,15 @@ import java.lang.reflect.Method;
 
 public class ChipOnFocusChangeListener implements View.OnFocusChangeListener {
 
-    private NChip NChip;
+    private NChip nchip;
     private EditText editText;
     private Drawable editTextDrawable, chipLayoutDrawable;
     private View.OnFocusChangeListener focusChangeListener;
 
-    public ChipOnFocusChangeListener(NChip NChip, EditText editText,
+    public ChipOnFocusChangeListener(NChip nchip, EditText editText,
                                      Drawable editTextDrawable, Drawable chipLayoutDrawable,
                                      View.OnFocusChangeListener focusChangeListener) {
-        this.NChip = NChip;
+        this.nchip = nchip;
         this.editText = editText;
         this.editTextDrawable = editTextDrawable;
         this.chipLayoutDrawable = chipLayoutDrawable;
@@ -34,15 +34,15 @@ public class ChipOnFocusChangeListener implements View.OnFocusChangeListener {
             focusChangeListener.onFocusChange(view, b);
         }
 
-        if(NChip.getWidth() < 1){
-            ViewTreeObserver vto = NChip.getViewTreeObserver();
+        if (nchip.getWidth() < 1) {
+            ViewTreeObserver vto = nchip.getViewTreeObserver();
             vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
                     if (Build.VERSION.SDK_INT < 16) {
-                        NChip.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                        nchip.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                     } else {
-                        NChip.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        nchip.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
                     changeBackground(b);
                 }
@@ -82,17 +82,17 @@ public class ChipOnFocusChangeListener implements View.OnFocusChangeListener {
                 if(b){
                     Drawable drawable = (Drawable) getStateDrawable.invoke(stateListDrawable, statePressed);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
-                        NChip.setBackground(drawable);
+                        nchip.setBackground(drawable);
                     } else{
-                        NChip.setBackgroundDrawable(drawable);
+                        nchip.setBackgroundDrawable(drawable);
                     }
-                    NChip.requestFocus();
+                    nchip.requestFocus();
                 }else {
                     Drawable drawable = (Drawable) getStateDrawable.invoke(stateListDrawable, stateEnabled);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
-                        NChip.setBackground(drawable);
+                        nchip.setBackground(drawable);
                     } else{
-                        NChip.setBackgroundDrawable(drawable);
+                        nchip.setBackgroundDrawable(drawable);
                     }
                 }
 

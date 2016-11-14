@@ -40,7 +40,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
             chipTextPaddingTop, chipTextPaddingBottom;
     private NChip NChip;
     private Context context;
-    private boolean showDeleteButton;
+    private boolean showDeleteButton, showKeyboardInFocus, autoSplitInActionKey;
     private int labelPosition;
     private int editTextColor, chipColor, chipTextColor;
     private Drawable deleteIcon, chipDrawable, chipLayoutDrawable;
@@ -110,6 +110,10 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         if (chipDrawable == null) {
             chipDrawable = ContextCompat.getDrawable(getContext(), R.drawable.nchip_round_corner_drawable);
         }
+
+        showKeyboardInFocus = true;
+        autoSplitInActionKey = true;
+
         createNewChipLayout(null);
         setOnClickListener();
 
@@ -452,7 +456,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         } else {
             imageButton.setImageResource(R.drawable.nchip_ic_remove);
         }
-        imageButton.setPadding(0, 0, 10, 0);
+        imageButton.setPadding(5, 0, 10, 0);
         imageButton.setLayoutParams(lparamsImageButton);
         imageButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -518,7 +522,9 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         autoCompleteTextView.setOnFocusChangeListener(focusChangeListener);
 
         autoCompleteTextView.requestFocus();
-        autoCompleteTextView.setOnEditorActionListener(new ChipEditorActionListener(autoCompleteTextView));
+        if (autoSplitInActionKey) {
+            autoCompleteTextView.setOnEditorActionListener(new ChipEditorActionListener(autoCompleteTextView));
+        }
         autoCompleteTextView.setAdapter(adapter);
         int density = context.getResources().getDisplayMetrics().densityDpi;
         switch (density) {
@@ -638,8 +644,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
             AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
             if (autoCompleteTextView.isFocusable()) {
                 autoCompleteTextView.requestFocus();
-                InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputMethodManager.toggleSoftInputFromWindow(autoCompleteTextView.getApplicationWindowToken(), InputMethodManager.SHOW_FORCED, 0);
+                toogleSoftInputKeyboard(autoCompleteTextView);
             } else {
                 createNewChipLayout(null);
             }
@@ -795,6 +800,48 @@ public class NChip extends ViewGroup implements View.OnClickListener {
             AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(this.getChildCount() - 1)).getChildAt(labelPosition);
             autoCompleteTextView.setAdapter(adapter);
         }
+    }
+
+    public void splitText() {
+        int totalChips = this.getChildCount() - 1;
+        if (totalChips < 0) return;
+        AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
+        autoCompleteTextView.setText(autoCompleteTextView.getText().toString() + ",");
+        if (autoCompleteTextView.isFocusable()) {
+            autoCompleteTextView.requestFocus();
+            toogleSoftInputKeyboard(autoCompleteTextView);
+        }
+    }
+
+    private void toogleSoftInputKeyboard(AutoCompleteTextView autoCompleteTextView) {
+        if (showKeyboardInFocus) {
+            InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.toggleSoftInputFromWindow(autoCompleteTextView.getApplicationWindowToken(), InputMethodManager.SHOW_FORCED, 0);
+        }
+    }
+
+    public boolean isAutoSplitInActionKey() {
+        return autoSplitInActionKey;
+    }
+
+    public void setAutoSplitInActionKey(boolean autoSplitInActionKey) {
+        this.autoSplitInActionKey = autoSplitInActionKey;
+    }
+
+    public boolean isShowDeleteButton() {
+        return showDeleteButton;
+    }
+
+    public void setShowDeleteButton(boolean showDeleteButton) {
+        this.showDeleteButton = showDeleteButton;
+    }
+
+    public boolean isShowKeyboardInFocus() {
+        return showKeyboardInFocus;
+    }
+
+    public void setShowKeyboardInFocus(boolean showKeyboardInFocus) {
+        this.showKeyboardInFocus = showKeyboardInFocus;
     }
 
     public interface ChipItemChangeListener {

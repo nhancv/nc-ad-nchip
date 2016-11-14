@@ -27,7 +27,7 @@ public class ChipTextWatcher implements TextWatcher {
 
     private ViewGroup chip;
     private Context context;
-    private NChip NChip;
+    private NChip nchip;
     private int chipTextColor, chipColor;
     private Drawable chipDrawable;
     private boolean showDeleteButton, setText;
@@ -35,11 +35,11 @@ public class ChipTextWatcher implements TextWatcher {
     private float textSize = 0;
 
     public ChipTextWatcher(ViewGroup chip, Context context,
-                           NChip NChip, int chipTextColor, int chipColor,
+                           NChip nchip, int chipTextColor, int chipColor,
                            Drawable chipDrawable, boolean showDeleteButton,
                            int labelPosition, boolean setText) {
         this.chip = chip;
-        this.NChip = NChip;
+        this.nchip = nchip;
         this.context = context;
         this.chipTextColor = chipTextColor;
         this.chipColor = chipColor;
@@ -67,7 +67,7 @@ public class ChipTextWatcher implements TextWatcher {
     @Override
     public void afterTextChanged(Editable editable) {
         String text = editable.toString();
-        if (text != null && text.length() > 0) {
+        if (text.length() > 0) {
             if (text.charAt(text.length() - 1) == ',') {
                 EditText editText = (EditText) chip.getChildAt(labelPosition);
                 editText.setTextColor(chipTextColor);
@@ -104,9 +104,9 @@ public class ChipTextWatcher implements TextWatcher {
                     close.setVisibility(View.VISIBLE);
                 }
                 if (!setText) {
-                    NChip.createNewChipLayout(null);
+                    nchip.createNewChipLayout(null);
                 }
-                NChip.chipCreated(chip);
+                nchip.chipCreated(chip);
             }
 
         }
@@ -153,7 +153,6 @@ public class ChipTextWatcher implements TextWatcher {
         textView.setBackgroundColor(Color.parseColor("#00FFFFFF"));
         textView.setLayoutParams(lparamsTextView);
         textView.setSingleLine(true);
-//        textView.setEditTextColor(textColor);
         textView.setTextColor(Color.WHITE);
         if (textSize > 0) {
             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);

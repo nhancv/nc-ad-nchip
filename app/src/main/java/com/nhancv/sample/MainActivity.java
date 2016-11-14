@@ -8,14 +8,17 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 
 import com.nhancv.nchip.NChip;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     NChip chip;
+    Button btAddFilter;
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
@@ -24,17 +27,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         NChip.MAX_CHARACTER_COUNT = 20;
         chip = (NChip) findViewById(R.id.chipText);
+        chip.setAutoSplitInActionKey(false);
+        btAddFilter = (Button) findViewById(R.id.btAddFilter);
 
-        chip.setOnClickListener(new View.OnClickListener() {
+        String[] countries = {"india", "australia", "austria", "indonesia", "canada"};
+
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, countries);
+        btAddFilter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.e(TAG, "onClick: " + chip.getText().toString());
-            }
-        });
-        chip.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.e(TAG, "onItemClick: " + i);
+                List<String> txtList = chip.getText();
+                if (txtList.size() > 0) {
+                    chip.splitText();
+                }
+
             }
         });
         chip.addLayoutTextChangedListener(new TextWatcher() {
@@ -52,6 +58,21 @@ public class MainActivity extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {
                 Log.e(TAG, "afterTextChanged: " + editable.toString());
 
+                boolean t = false;
+                for (int i = 0; i < adapter.getCount(); i++) {
+                    if (adapter.getItem(i).startsWith(editable.toString())) {
+                        Log.e(TAG, "find: " + adapter.getItem(i));
+                        t = true;
+                        break;
+                    }
+                }
+                if (!t) {
+                    btAddFilter.setVisibility(View.VISIBLE);
+                } else {
+                    btAddFilter.setVisibility(View.GONE);
+                }
+
+
             }
         });
         chip.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -63,19 +84,16 @@ public class MainActivity extends AppCompatActivity {
         chip.setOnChipItemChangeListener(new NChip.ChipItemChangeListener() {
             @Override
             public void onChipAdded(int pos, String txt) {
-                Log.d(txt, String.valueOf(pos));
+                Log.d(TAG, "added txt= " + txt + " pos= " + String.valueOf(pos));
 
             }
 
             @Override
             public void onChipRemoved(int pos, String txt) {
-                Log.d(txt, String.valueOf(pos));
+                Log.d(TAG, "removed txt = " + txt + " pos= " + String.valueOf(pos));
             }
         });
 
-
-        String[] countries = {"india", "australia", "austria", "indonesia", "canada"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, countries);
         chip.setAdapter(adapter);
     }
 
