@@ -28,31 +28,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-public class NChip extends ViewGroup implements View.OnClickListener {
+public class NChip<O extends Object> extends ViewGroup implements View.OnClickListener {
 
     public static int MAX_CHARACTER_COUNT = 20;
-    private final List<List<View>> mLines = new ArrayList<List<View>>();
-    private final List<Integer> mLineHeights = new ArrayList<Integer>();
-    private final List<Integer> mLineMargins = new ArrayList<Integer>();
+    private final List<List<View>> mLines = new ArrayList<>();
+    private final List<Integer> mLineHeights = new ArrayList<>();
+    private final List<Integer> mLineMargins = new ArrayList<>();
     private int mGravity = (isIcs() ? Gravity.START : Gravity.LEFT) | Gravity.TOP;
     private float textSize, chipTextPadding, chipPadding, chipPaddingLeft, chipPaddingRight,
             chipPaddingTop, chipPaddingBottom, chipTextPaddingLeft, chipTextPaddingRight,
             chipTextPaddingTop, chipTextPaddingBottom;
-    private NChip NChip;
+    private NChip nchip;
     private Context context;
-    private boolean showDeleteButton, showKeyboardInFocus, autoSplitInActionKey;
-    private int labelPosition;
-    private int editTextColor, chipColor, chipTextColor;
-    private Drawable deleteIcon, chipDrawable, chipLayoutDrawable;
-    private Bitmap deleteIcon_ = null;
-    private List<TextWatcher> listTextWatcher = new ArrayList<>();
-    private ArrayAdapter adapter;
-    private AdapterView.OnItemClickListener onItemClickListener;
-    private OnClickListener onClickListener;
-    private OnFocusChangeListener onFocusChangeListener;
-    private ChipItemChangeListener chipItemChangeListener;
+    private boolean showDeleteButton, showKeyboardInFocus, autoSplitInActionKey, initFocus, chipEnableEdit;
+    private int labelPosition, editTextColor, chipColor, chipTextColor;
     private int dropDownWidth = 300;
+    private ArrayAdapter<O> adapter;
+    private String chipInitHint, chipSplitFlag;
+    private Bitmap deleteIcon_ = null;
+    private Drawable deleteIcon, chipDrawable, chipLayoutDrawable;
+    private View.OnClickListener onClickListener;
+    private View.OnFocusChangeListener onFocusChangeListener;
+    private AdapterView.OnItemClickListener onItemClickListener;
+    private ChipItemChangeListener chipItemChangeListener;
     private TextWatcher focusedTextWatcher;
+    private List<TextWatcher> listTextWatcher = new ArrayList<>();
 
     public NChip(Context context) {
         this(context, null);
@@ -73,6 +73,10 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         chipDrawable = a_.getDrawable(R.styleable.nchip_layout_chipDrawable_);
         deleteIcon = a_.getDrawable(R.styleable.nchip_layout_deleteIcon_);
         showDeleteButton = a_.getBoolean(R.styleable.nchip_layout_showDeleteButton_, true);
+        initFocus = a_.getBoolean(R.styleable.nchip_layout_chipInitFocus_, false);
+        chipEnableEdit = a_.getBoolean(R.styleable.nchip_layout_chipEnableEdit_, true);
+        chipInitHint = a_.getString(R.styleable.nchip_layout_chipInitHint_);
+        chipSplitFlag = a_.getString(R.styleable.nchip_layout_chipSplitFlag_);
         labelPosition = a_.getInt(R.styleable.nchip_layout_labelPosition_, 0);
         chipLayoutDrawable = a_.getDrawable(R.styleable.nchip_layout_chipLayoutDrawable_);
         textSize = a_.getDimensionPixelSize(R.styleable.nchip_layout_textSize_, 14);
@@ -103,7 +107,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
             a.recycle();
         }
         this.context = context;
-        NChip = this;
+        nchip = this;
         if (chipLayoutDrawable != null) {
             setLayoutBackground(chipLayoutDrawable);
         }
@@ -111,6 +115,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
             chipDrawable = ContextCompat.getDrawable(getContext(), R.drawable.nchip_round_corner_drawable);
         }
 
+        if (chipSplitFlag == null) chipSplitFlag = ",";
         showKeyboardInFocus = true;
         autoSplitInActionKey = true;
 
@@ -121,10 +126,6 @@ public class NChip extends ViewGroup implements View.OnClickListener {
 
     private static boolean isIcs() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH;
-    }
-
-    public ChipItemChangeListener getOnChipItemChangeListener() {
-        return this.chipItemChangeListener;
     }
 
     public void setOnChipItemChangeListener(ChipItemChangeListener l) {
@@ -246,7 +247,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
 
         int lineWidth = 0;
         int lineHeight = 0;
-        List<View> lineViews = new ArrayList<View>();
+        List<View> lineViews = new ArrayList<>();
 
         float horizontalGravityFactor;
         switch ((mGravity & Gravity.HORIZONTAL_GRAVITY_MASK)) {
@@ -443,9 +444,6 @@ public class NChip extends ViewGroup implements View.OnClickListener {
     }
 
     private ImageButton createImageButton(Context context) {
-
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-
         final LayoutParams lparamsImageButton = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT);
         lparamsImageButton.setMargins(0, 0, 0, 0);
         lparamsImageButton.gravity = Gravity.CENTER;
@@ -462,7 +460,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
             @Override
             public void onClick(View view) {
                 View chip = (View) view.getParent();
-                int pos = NChip.indexOfChild(chip);
+                int pos = nchip.indexOfChild(chip);
                 removeChipAt(pos);
             }
         });
@@ -486,7 +484,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         return layout;
     }
 
-    private ViewGroup createChips(Context context, String val, boolean setText) {
+    private ViewGroup createChips(Context context, O val, boolean setText) {
 
         final LinearLayout layout = createLinearLayout(context);
         final AutoCompleteTextView autoCompleteTextView = createAutoCompleteTextView(context);
@@ -506,7 +504,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         }
 
         TextWatcher textWatcher = new ChipTextWatcher(layout, context, this, chipTextColor, chipColor, newDrawable,
-                showDeleteButton, labelPosition, setText);
+                showDeleteButton, labelPosition, setText, chipSplitFlag);
         focusedTextWatcher = textWatcher;
         if (textSize > 0) {
             autoCompleteTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
@@ -517,13 +515,15 @@ public class NChip extends ViewGroup implements View.OnClickListener {
             autoCompleteTextView.addTextChangedListener(tw);
         }
 
-        OnFocusChangeListener focusChangeListener = new ChipOnFocusChangeListener(this, autoCompleteTextView,
-                chipDrawable, chipLayoutDrawable, onFocusChangeListener);
+        OnFocusChangeListener focusChangeListener = new ChipOnFocusChangeListener(this, chipLayoutDrawable, onFocusChangeListener);
         autoCompleteTextView.setOnFocusChangeListener(focusChangeListener);
 
-        autoCompleteTextView.requestFocus();
+        if (initFocus || getChildCount() > 0) {
+            autoCompleteTextView.requestFocus();
+        }
+
         if (autoSplitInActionKey) {
-            autoCompleteTextView.setOnEditorActionListener(new ChipEditorActionListener(autoCompleteTextView));
+            autoCompleteTextView.setOnEditorActionListener(new ChipEditorActionListener(autoCompleteTextView, chipSplitFlag));
         }
         autoCompleteTextView.setAdapter(adapter);
         int density = context.getResources().getDisplayMetrics().densityDpi;
@@ -545,65 +545,79 @@ public class NChip extends ViewGroup implements View.OnClickListener {
                 dropDownWidth = 360;
                 break;
         }
-        if (NChip.getWidth() < 1) {
+        if (nchip.getWidth() < 1) {
             ViewTreeObserver vto = this.getViewTreeObserver();
             vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
                     if (Build.VERSION.SDK_INT < 16) {
-                        NChip.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                        nchip.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                     } else {
-                        NChip.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        nchip.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
-                    if (NChip.getWidth() < dropDownWidth) {
+                    if (nchip.getWidth() < dropDownWidth) {
                         autoCompleteTextView.setDropDownWidth(dropDownWidth);
                     } else {
-                        autoCompleteTextView.setDropDownWidth(NChip.getWidth());
+                        autoCompleteTextView.setDropDownWidth(nchip.getWidth());
                     }
                 }
             });
         } else {
-            if (NChip.getWidth() < dropDownWidth) {
+            if (nchip.getWidth() < dropDownWidth) {
                 autoCompleteTextView.setDropDownWidth(dropDownWidth);
             } else {
-                autoCompleteTextView.setDropDownWidth(NChip.getWidth());
+                autoCompleteTextView.setDropDownWidth(nchip.getWidth());
             }
         }
         autoCompleteTextView.setDropDownVerticalOffset(3);
         autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-                autoCompleteTextView.setText(autoCompleteTextView.getText().toString() + ",");
-                if (onItemClickListener != null) {
-                    onItemClickListener.onItemClick(arg0, arg1, arg2, arg3);
+                try {
+                    autoCompleteTextView.setTag(arg0.getAdapter().getItem(arg2));
+                    autoCompleteTextView.setText(autoCompleteTextView.getText().toString() + chipSplitFlag);
+                    if (onItemClickListener != null) {
+                        onItemClickListener.onItemClick(arg0, arg1, arg2, arg3);
+                    }
+                } catch (Exception ignored) {
                 }
             }
         });
 
 
         if (val != null) {
-            autoCompleteTextView.setText(val);
+            autoCompleteTextView.setText(val.toString() + chipSplitFlag);
+        } else if (chipInitHint != null && getChildCount() == 0) {
+            autoCompleteTextView.setHint(chipInitHint);
+        }
+
+        if (!chipEnableEdit) {
+            autoCompleteTextView.setText(null);
+            autoCompleteTextView.setEnabled(false);
+            autoCompleteTextView.setFocusable(false);
+            autoCompleteTextView.setFocusableInTouchMode(false);
+
         }
         return layout;
     }
 
-    void createNewChipLayout(String val) {
+    void createNewChipLayout(O val) {
         this.addView(createChips(context, val, false));
     }
 
-    void createNewChipLayout(String val, boolean setText) {
+    void createNewChipLayout(O val, boolean setText) {
         this.addView(createChips(context, val, setText));
     }
 
     void chipCreated(ViewGroup vg) {
         AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) vg.getChildAt(labelPosition);
-        int pos = NChip.indexOfChild(vg);
+        int pos = nchip.indexOfChild(vg);
 
         if (chipItemChangeListener != null) {
             if (autoCompleteTextView.getText() != null && autoCompleteTextView.getText().toString().length() > 0) {
-                chipItemChangeListener.onChipAdded(pos, autoCompleteTextView.getText().toString());
+                chipItemChangeListener.onChipAdded(pos, autoCompleteTextView.getTag());
             } else {
-                chipItemChangeListener.onChipAdded(pos, "");
+                chipItemChangeListener.onChipAdded(pos, null);
             }
         }
     }
@@ -613,8 +627,7 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         onFocusChangeListener = f;
         if (this.getChildCount() > 0) {
             AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(this.getChildCount() - 1)).getChildAt(labelPosition);
-            OnFocusChangeListener focusChangeListener = new ChipOnFocusChangeListener(this, autoCompleteTextView,
-                    chipDrawable, chipLayoutDrawable, onFocusChangeListener);
+            OnFocusChangeListener focusChangeListener = new ChipOnFocusChangeListener(this, chipLayoutDrawable, onFocusChangeListener);
             autoCompleteTextView.setOnFocusChangeListener(focusChangeListener);
         }
     }
@@ -637,19 +650,20 @@ public class NChip extends ViewGroup implements View.OnClickListener {
     }
 
     private void onLayoutClick() {
-        int totalChips = this.getChildCount() - 1;
-        if (totalChips < 0) {
-            createNewChipLayout(null);
-        } else {
-            AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
-            if (autoCompleteTextView.isFocusable()) {
-                autoCompleteTextView.requestFocus();
-                toogleSoftInputKeyboard(autoCompleteTextView);
-            } else {
+        if (chipEnableEdit) {
+            int totalChips = this.getChildCount() - 1;
+            if (totalChips < 0) {
                 createNewChipLayout(null);
+            } else {
+                AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
+                if (autoCompleteTextView.isFocusable()) {
+                    autoCompleteTextView.requestFocus();
+                    toogleSoftInputKeyboard(autoCompleteTextView);
+                } else {
+                    createNewChipLayout(null);
+                }
             }
         }
-
     }
 
     public AdapterView.OnItemClickListener getOnItemClickListener() {
@@ -750,22 +764,31 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         }
     }
 
-    public List<String> getText() {
-        List<String> textList = new ArrayList<>();
+    public List<O> getObjList() {
+        List<O> objList = new ArrayList<>();
         for (int i = 0; i < this.getChildCount(); i++) {
-            AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(i)).getChildAt(labelPosition);
-            if (autoCompleteTextView.getText() != null && autoCompleteTextView.getText().toString().length() > 0) {
-                textList.add(autoCompleteTextView.getText().toString());
+            try {
+                AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(i)).getChildAt(labelPosition);
+                if (autoCompleteTextView.getTag() != null) {
+                    String txt = autoCompleteTextView.getTag().toString();
+                    if (txt.lastIndexOf(chipSplitFlag) == -1) {
+                        objList.add((O) autoCompleteTextView.getTag());
+                    }
+                }
+            } catch (Exception ignored) {
             }
         }
-        return textList;
+        return objList;
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public void setText(List<String> vals) {
+    public void setObjList(List<O> vals) {
         this.removeAllViews();
-        for (String str : vals) {
-            createNewChipLayout(str + ",", true);
+        for (O str : vals) {
+            try {
+                createNewChipLayout(str, true);
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -774,11 +797,12 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         this.removeViewAt(pos);
         if (chipItemChangeListener != null) {
             if (autoCompleteTextView.getText() != null && autoCompleteTextView.getText().toString().length() > 0) {
-                chipItemChangeListener.onChipRemoved(pos, autoCompleteTextView.getText().toString());
+                chipItemChangeListener.onChipRemoved(pos, autoCompleteTextView.getTag());
             } else {
-                chipItemChangeListener.onChipRemoved(pos, "");
+                chipItemChangeListener.onChipRemoved(pos, null);
             }
         }
+        updateHint();
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -790,11 +814,11 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         }
     }
 
-    public ArrayAdapter getAdapter() {
+    public ArrayAdapter<O> getAdapter() {
         return this.adapter;
     }
 
-    public void setAdapter(ArrayAdapter adapter) {
+    public void setAdapter(ArrayAdapter<O> adapter) {
         this.adapter = adapter;
         if (this.getChildCount() > 0) {
             AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(this.getChildCount() - 1)).getChildAt(labelPosition);
@@ -802,14 +826,65 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         }
     }
 
-    public void splitText() {
+    public void addObj(O obj) {
         int totalChips = this.getChildCount() - 1;
         if (totalChips < 0) return;
+        getAdapter().add(obj);
         AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
-        autoCompleteTextView.setText(autoCompleteTextView.getText().toString() + ",");
+        autoCompleteTextView.setTag(obj);
+        autoCompleteTextView.setText(obj.toString() + chipSplitFlag);
         if (autoCompleteTextView.isFocusable()) {
             autoCompleteTextView.requestFocus();
             toogleSoftInputKeyboard(autoCompleteTextView);
+        }
+
+    }
+
+    public String getCurrentText() {
+        int totalChips = this.getChildCount() - 1;
+        if (totalChips < 0) return null;
+        AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
+        return autoCompleteTextView.getText().toString();
+    }
+
+    public void updateHint() {
+        int totalChips = this.getChildCount() - 1;
+        if (totalChips != 0) return;
+        AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
+        autoCompleteTextView.setHint(chipInitHint);
+    }
+
+    /**
+     * Check if editable exist chipSplitFlag
+     *
+     * @param editable
+     * @return
+     */
+    public boolean hasChanged(String editable) {
+        if (editable == null) return false;
+        if (editable.lastIndexOf(chipSplitFlag) != -1) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if current text exist chipSplitFlag
+     *
+     * @return
+     */
+    public boolean hasChanged() {
+        return hasChanged(getCurrentText());
+    }
+
+    public O getCurrentObj() {
+        try {
+            int totalChips = this.getChildCount() - 1;
+            if (totalChips < 0) return null;
+            AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) ((ViewGroup) this.getChildAt(totalChips)).getChildAt(labelPosition);
+            return (O) autoCompleteTextView.getTag();
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -844,10 +919,18 @@ public class NChip extends ViewGroup implements View.OnClickListener {
         this.showKeyboardInFocus = showKeyboardInFocus;
     }
 
-    public interface ChipItemChangeListener {
-        void onChipAdded(int pos, String txt);
+    public boolean isInitFocus() {
+        return initFocus;
+    }
 
-        void onChipRemoved(int pos, String txt);
+    public void setInitFocus(boolean initFocus) {
+        this.initFocus = initFocus;
+    }
+
+    public interface ChipItemChangeListener {
+        void onChipAdded(int pos, Object data);
+
+        void onChipRemoved(int pos, Object data);
     }
 
     public static class LayoutParams extends MarginLayoutParams {

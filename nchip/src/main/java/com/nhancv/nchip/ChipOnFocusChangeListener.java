@@ -5,7 +5,6 @@ import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.widget.EditText;
 
 import java.lang.reflect.Method;
 
@@ -13,16 +12,12 @@ import java.lang.reflect.Method;
 public class ChipOnFocusChangeListener implements View.OnFocusChangeListener {
 
     private NChip nchip;
-    private EditText editText;
-    private Drawable editTextDrawable, chipLayoutDrawable;
+    private Drawable chipLayoutDrawable;
     private View.OnFocusChangeListener focusChangeListener;
 
-    public ChipOnFocusChangeListener(NChip nchip, EditText editText,
-                                     Drawable editTextDrawable, Drawable chipLayoutDrawable,
+    public ChipOnFocusChangeListener(NChip nchip, Drawable chipLayoutDrawable,
                                      View.OnFocusChangeListener focusChangeListener) {
         this.nchip = nchip;
-        this.editText = editText;
-        this.editTextDrawable = editTextDrawable;
         this.chipLayoutDrawable = chipLayoutDrawable;
         this.focusChangeListener = focusChangeListener;
     }

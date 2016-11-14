@@ -13,10 +13,16 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.nhancv.sample.MainActivity">
 
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
     <com.nhancv.nchip.NChip
         android:id="@+id/chipText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:chipEnableEdit_="false"
+        app:chipHint_="Please input dsfasdfasdf"
+        app:chipInitFocus_="true"
         app:chipLayoutDrawable_="@drawable/edittext_theme_landing_page"
         app:chipPadding_="4dp"
         app:chipTextColor_="#ffffff"
@@ -32,4 +38,10 @@
         android:layout_height="wrap_content"
         android:text="Add filter"
         android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/btGetList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Get chip list"/>
 </LinearLayout>

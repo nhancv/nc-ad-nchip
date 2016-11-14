@@ -28,16 +28,17 @@ public class ChipTextWatcher implements TextWatcher {
     private ViewGroup chip;
     private Context context;
     private NChip nchip;
-    private int chipTextColor, chipColor;
     private Drawable chipDrawable;
+    private String chipSplitFlag;
     private boolean showDeleteButton, setText;
-    private int labelPosition;
     private float textSize = 0;
+    private int chipTextColor, chipColor;
+    private int labelPosition;
 
     public ChipTextWatcher(ViewGroup chip, Context context,
                            NChip nchip, int chipTextColor, int chipColor,
                            Drawable chipDrawable, boolean showDeleteButton,
-                           int labelPosition, boolean setText) {
+                           int labelPosition, boolean setText, String chipSplitFlag) {
         this.chip = chip;
         this.nchip = nchip;
         this.context = context;
@@ -47,6 +48,7 @@ public class ChipTextWatcher implements TextWatcher {
         this.showDeleteButton = showDeleteButton;
         this.labelPosition = labelPosition;
         this.setText = setText;
+        this.chipSplitFlag = chipSplitFlag;
     }
 
     @Override
@@ -68,7 +70,7 @@ public class ChipTextWatcher implements TextWatcher {
     public void afterTextChanged(Editable editable) {
         String text = editable.toString();
         if (text.length() > 0) {
-            if (text.charAt(text.length() - 1) == ',') {
+            if (text.lastIndexOf(chipSplitFlag) != -1) {
                 EditText editText = (EditText) chip.getChildAt(labelPosition);
                 editText.setTextColor(chipTextColor);
                 String val = text.substring(0, text.length() - 1);
@@ -78,6 +80,7 @@ public class ChipTextWatcher implements TextWatcher {
                     editText.setInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
                     editText.setText(val);
                 }
+                editText.setHint(" ");
                 editText.setClickable(false);
                 editText.setCursorVisible(false);
                 editText.setFocusable(false);
