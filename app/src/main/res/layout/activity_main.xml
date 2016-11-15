@@ -13,15 +13,13 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.nhancv.sample.MainActivity">
 
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
     <com.nhancv.nchip.NChip
         android:id="@+id/chipText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="0dp"
+        app:chipDropdownTopOffset_="5dp"
+        app:chipDropdownWidth_="-2dp"
         app:chipEditPaddingLeft_="0dp"
         app:chipEnableEdit_="true"
         app:chipInitFocus_="true"

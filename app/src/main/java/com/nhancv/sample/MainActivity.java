@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 
 import com.nhancv.nchip.NChip;
@@ -56,23 +55,23 @@ public class MainActivity extends AppCompatActivity {
         list.add(new Obj(1, "test1"));
         list.add(new Obj(3, "test2"));
 
-        final ArrayAdapter<Obj> adapter = new ArrayAdapter<>(chip.getContext(), android.R.layout.simple_list_item_1, list);
+//        final ArrayAdapter<Obj> adapter = new ArrayAdapter<>(chip.getContext(), android.R.layout.simple_list_item_1, list);
+//        chip.setAdapter(adapter);
+//        chip.addObj(list.get(0));
+        final CustomAdapter adapter = new CustomAdapter(chip.getContext(), list);
         chip.setAdapter(adapter);
         chip.addObj(list.get(0));
-
-        chip.setOnChipItemChangeListener(new NChip.ChipItemChangeListener() {
+        chip.setOnChipItemChangeListener(new NChip.ChipItemChangeListener<Obj>() {
             @Override
-            public void onChipAdded(int pos, Object data) {
+            public void onChipAdded(int pos, Obj data) {
                 btAddFilter.setVisibility(View.GONE);
-                if (data != null && data instanceof Obj)
-                    Log.e(TAG, "onChipAdded: " + ((Obj) data).show());
+                Log.e(TAG, "onChipAdded: " + data.show());
             }
 
             @Override
-            public void onChipRemoved(int pos, Object data) {
+            public void onChipRemoved(int pos, Obj data) {
                 btAddFilter.setVisibility(View.GONE);
-                if (data != null && data instanceof Obj)
-                    Log.e(TAG, "onChipRemoved: " + ((Obj) data).show());
+                Log.e(TAG, "onChipRemoved: " + data.show());
             }
         });
         chip.addLayoutTextChangedListener(new NChipTextChange(new NChipTextChange.Doing() {

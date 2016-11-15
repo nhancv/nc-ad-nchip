@@ -16,7 +16,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -28,22 +27,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-public class NChip<O extends Object> extends ViewGroup implements View.OnClickListener {
+public class NChip<O> extends ViewGroup implements View.OnClickListener {
 
     public static int MAX_CHARACTER_COUNT = 20;
     private final List<List<View>> mLines = new ArrayList<>();
     private final List<Integer> mLineHeights = new ArrayList<>();
     private final List<Integer> mLineMargins = new ArrayList<>();
+    private List<View> lineViews = new ArrayList<>();
+
     private int mGravity = (isIcs() ? Gravity.START : Gravity.LEFT) | Gravity.TOP;
     private float textSize, chipTextPadding, chipPadding, chipPaddingLeft, chipPaddingRight,
             chipPaddingTop, chipPaddingBottom, chipTextPaddingLeft, chipTextPaddingRight,
             chipTextPaddingTop, chipTextPaddingBottom, chipEditPadding, chipEditPaddingTop,
-            chipEditPaddingBottom, chipEditPaddingLeft, chipEditPaddingRight;
+            chipEditPaddingBottom, chipEditPaddingLeft, chipEditPaddingRight, chipDropdownWidth, chipDropdownTopOffset, chipDropdownLeftOffset;
     private NChip nchip;
     private Context context;
     private boolean showDeleteButton, showKeyboardInFocus, autoSplitInActionKey, initFocus, chipEnableEdit;
-    private int labelPosition, editTextColor, chipColor, chipTextColor;
-    private int dropDownWidth = 300;
+    private int labelPosition, editTextColor, chipColor, chipTextColor, chipHintColor;
+    private int dropDownWidth = -1;
     private ArrayAdapter<O> adapter;
     private String chipInitHint, chipSplitFlag;
     private Bitmap deleteIcon_ = null;
@@ -51,8 +52,9 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
     private View.OnClickListener onClickListener;
     private View.OnFocusChangeListener onFocusChangeListener;
     private AdapterView.OnItemClickListener onItemClickListener;
-    private ChipItemChangeListener chipItemChangeListener;
+    private ChipItemChangeListener<O> chipItemChangeListener;
     private TextWatcher focusedTextWatcher;
+    private DisplayMetrics displayMetrics;
     private List<TextWatcher> listTextWatcher = new ArrayList<>();
 
     public NChip(Context context) {
@@ -70,6 +72,8 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
 
         editTextColor = a_.getColor(R.styleable.nchip_layout_editTextColor_, Color.parseColor("#000000"));
         chipTextColor = a_.getColor(R.styleable.nchip_layout_chipTextColor_, Color.parseColor("#ffffff"));
+        chipHintColor = a_.getColor(R.styleable.nchip_layout_chipHintColor_, Color.parseColor("#9b9b9b"));
+
         chipColor = a_.getColor(R.styleable.nchip_layout_chipColor_, Color.parseColor("#00FFFFFF"));
         chipDrawable = a_.getDrawable(R.styleable.nchip_layout_chipDrawable_);
         deleteIcon = a_.getDrawable(R.styleable.nchip_layout_deleteIcon_);
@@ -82,10 +86,10 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
         chipLayoutDrawable = a_.getDrawable(R.styleable.nchip_layout_chipLayoutDrawable_);
         textSize = a_.getDimensionPixelSize(R.styleable.nchip_layout_textSize_, 14);
         chipTextPadding = a_.getDimension(R.styleable.nchip_layout_chipTextPadding_, 0);
-        chipTextPaddingLeft = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingLeft_, 0);
-        chipTextPaddingRight = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingRight_, 0);
-        chipTextPaddingTop = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingTop_, 0);
-        chipTextPaddingBottom = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingBottom_, 0);
+        chipTextPaddingLeft = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingLeft_, chipTextPadding);
+        chipTextPaddingRight = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingRight_, chipTextPadding);
+        chipTextPaddingTop = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingTop_, chipTextPadding);
+        chipTextPaddingBottom = a_.getDimension(R.styleable.nchip_layout_chipTextPaddingBottom_, chipTextPadding);
         chipPadding = a_.getDimension(R.styleable.nchip_layout_chipPadding_, 0);
         chipPaddingLeft = a_.getDimension(R.styleable.nchip_layout_chipPaddingLeft_, 0);
         chipPaddingRight = a_.getDimension(R.styleable.nchip_layout_chipPaddingRight_, 0);
@@ -97,6 +101,14 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
         chipEditPaddingTop = a_.getDimension(R.styleable.nchip_layout_chipEditPaddingTop_, chipEditPadding);
         chipEditPaddingRight = a_.getDimension(R.styleable.nchip_layout_chipEditPaddingRight_, chipEditPadding);
         chipEditPaddingBottom = a_.getDimension(R.styleable.nchip_layout_chipEditPaddingBottom_, chipEditPadding);
+
+        chipDropdownWidth = a_.getDimension(R.styleable.nchip_layout_chipDropdownWidth_, 0);
+        chipDropdownTopOffset = a_.getDimension(R.styleable.nchip_layout_chipDropdownTopOffset_, chipTextPaddingBottom);
+        chipDropdownLeftOffset = a_.getDimension(R.styleable.nchip_layout_chipDropdownLeftOffset_, 0);
+
+        displayMetrics = getResources().getDisplayMetrics();
+        if (chipDropdownWidth < 0) chipDropdownWidth /= displayMetrics.density;
+        if (chipDropdownWidth == -3) chipDropdownWidth = displayMetrics.widthPixels;
 
         if (deleteIcon != null) {
             deleteIcon_ = ((BitmapDrawable) deleteIcon).getBitmap();
@@ -254,8 +266,8 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
 
         int lineWidth = 0;
         int lineHeight = 0;
-        List<View> lineViews = new ArrayList<>();
 
+        lineViews.clear();
         float horizontalGravityFactor;
         switch ((mGravity & Gravity.HORIZONTAL_GRAVITY_MASK)) {
             case Gravity.LEFT:
@@ -291,7 +303,7 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
 
                 lineHeight = 0;
                 lineWidth = 0;
-                lineViews = new ArrayList<>();
+                lineViews.clear();
             }
 
             lineWidth += childWidth;
@@ -442,6 +454,7 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
         autoCompleteTextView.setBackgroundColor(Color.parseColor("#00FFFFFF"));
         autoCompleteTextView.setLayoutParams(lparamsTextView);
         autoCompleteTextView.setHint(" ");
+        autoCompleteTextView.setHintTextColor(chipHintColor);
         autoCompleteTextView.setPadding((int) chipEditPaddingLeft, (int) chipEditPaddingTop, (int) chipEditPaddingRight, (int) chipEditPaddingBottom);
         autoCompleteTextView.setSingleLine(true);
         autoCompleteTextView.setTextColor(editTextColor);
@@ -533,50 +546,34 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
             autoCompleteTextView.setOnEditorActionListener(new ChipEditorActionListener(autoCompleteTextView, chipSplitFlag));
         }
         autoCompleteTextView.setAdapter(adapter);
-        int density = context.getResources().getDisplayMetrics().densityDpi;
-        switch (density) {
-            case DisplayMetrics.DENSITY_LOW:
-                break;
-            case DisplayMetrics.DENSITY_MEDIUM:
-                break;
-            case DisplayMetrics.DENSITY_HIGH:
-                dropDownWidth = 280;
-                break;
-            case DisplayMetrics.DENSITY_XHIGH:
-                dropDownWidth = 300;
-                break;
-            case DisplayMetrics.DENSITY_XXHIGH:
-                dropDownWidth = 320;
-                break;
-            case DisplayMetrics.DENSITY_560:
-                dropDownWidth = 360;
-                break;
-        }
-        if (nchip.getWidth() < 1) {
-            ViewTreeObserver vto = this.getViewTreeObserver();
-            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    if (Build.VERSION.SDK_INT < 16) {
-                        nchip.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                    } else {
-                        nchip.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                    if (nchip.getWidth() < dropDownWidth) {
-                        autoCompleteTextView.setDropDownWidth(dropDownWidth);
-                    } else {
-                        autoCompleteTextView.setDropDownWidth(nchip.getWidth());
-                    }
-                }
-            });
-        } else {
-            if (nchip.getWidth() < dropDownWidth) {
-                autoCompleteTextView.setDropDownWidth(dropDownWidth);
-            } else {
-                autoCompleteTextView.setDropDownWidth(nchip.getWidth());
+        if (chipDropdownWidth == 0) {
+            switch (displayMetrics.densityDpi) {
+                case DisplayMetrics.DENSITY_LOW:
+                    break;
+                case DisplayMetrics.DENSITY_MEDIUM:
+                    break;
+                case DisplayMetrics.DENSITY_HIGH:
+                    dropDownWidth = 280;
+                    break;
+                case DisplayMetrics.DENSITY_XHIGH:
+                    dropDownWidth = 300;
+                    break;
+                case DisplayMetrics.DENSITY_XXHIGH:
+                    dropDownWidth = 320;
+                    break;
+                case DisplayMetrics.DENSITY_560:
+                    dropDownWidth = 360;
+                    break;
             }
+        } else {
+            autoCompleteTextView.setDropDownAnchor(nchip.getId());
+            dropDownWidth = (int) chipDropdownWidth;
         }
-        autoCompleteTextView.setDropDownVerticalOffset(3);
+
+        autoCompleteTextView.setDropDownWidth(dropDownWidth);
+        autoCompleteTextView.setDropDownVerticalOffset((int) chipDropdownTopOffset);
+        autoCompleteTextView.setDropDownHorizontalOffset((int) chipDropdownLeftOffset);
+
         autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
@@ -622,7 +619,7 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
 
         if (chipItemChangeListener != null) {
             if (autoCompleteTextView.getText() != null && autoCompleteTextView.getText().toString().length() > 0) {
-                chipItemChangeListener.onChipAdded(pos, autoCompleteTextView.getTag());
+                chipItemChangeListener.onChipAdded(pos, (O) autoCompleteTextView.getTag());
             } else {
                 chipItemChangeListener.onChipAdded(pos, null);
             }
@@ -804,7 +801,7 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
         this.removeViewAt(pos);
         if (chipItemChangeListener != null) {
             if (autoCompleteTextView.getText() != null && autoCompleteTextView.getText().toString().length() > 0) {
-                chipItemChangeListener.onChipRemoved(pos, autoCompleteTextView.getTag());
+                chipItemChangeListener.onChipRemoved(pos, (O) autoCompleteTextView.getTag());
             } else {
                 chipItemChangeListener.onChipRemoved(pos, null);
             }
@@ -934,10 +931,34 @@ public class NChip<O extends Object> extends ViewGroup implements View.OnClickLi
         this.initFocus = initFocus;
     }
 
-    public interface ChipItemChangeListener {
-        void onChipAdded(int pos, Object data);
+    public int getChipTextColor() {
+        return chipTextColor;
+    }
 
-        void onChipRemoved(int pos, Object data);
+    public void setChipTextColor(int chipTextColor) {
+        this.chipTextColor = chipTextColor;
+    }
+
+    public int getChipHintColor() {
+        return chipHintColor;
+    }
+
+    public void setChipHintColor(int chipHintColor) {
+        this.chipHintColor = chipHintColor;
+    }
+
+    public Drawable getDeleteIcon() {
+        return deleteIcon;
+    }
+
+    public void setDeleteIcon(Drawable deleteIcon) {
+        this.deleteIcon = deleteIcon;
+    }
+
+    public interface ChipItemChangeListener<O> {
+        void onChipAdded(int pos, O data);
+
+        void onChipRemoved(int pos, O data);
     }
 
     public static class LayoutParams extends MarginLayoutParams {
