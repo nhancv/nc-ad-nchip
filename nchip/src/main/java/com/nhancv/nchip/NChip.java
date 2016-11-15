@@ -105,6 +105,8 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
         chipDropdownTopOffset = a_.getDimension(R.styleable.nchip_layout_chipDropdownTopOffset_, chipTextPaddingBottom);
         chipDropdownLeftOffset = a_.getDimension(R.styleable.nchip_layout_chipDropdownLeftOffset_, 0);
 
+        a_.recycle();
+
         displayMetrics = getResources().getDisplayMetrics();
         if (chipDropdownWidth < 0) chipDropdownWidth /= displayMetrics.density;
         if (chipDropdownWidth == -3) chipDropdownWidth = displayMetrics.widthPixels;
