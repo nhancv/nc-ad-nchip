@@ -33,7 +33,6 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
     private final List<List<View>> mLines = new ArrayList<>();
     private final List<Integer> mLineHeights = new ArrayList<>();
     private final List<Integer> mLineMargins = new ArrayList<>();
-    private List<View> lineViews = new ArrayList<>();
 
     private int mGravity = (isIcs() ? Gravity.START : Gravity.LEFT) | Gravity.TOP;
     private float textSize, chipTextPadding, chipPadding, chipPaddingLeft, chipPaddingRight,
@@ -267,7 +266,7 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
         int lineWidth = 0;
         int lineHeight = 0;
 
-        lineViews.clear();
+        List<View> lineViews = new ArrayList<>();
         float horizontalGravityFactor;
         switch ((mGravity & Gravity.HORIZONTAL_GRAVITY_MASK)) {
             case Gravity.LEFT:
@@ -303,7 +302,7 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
 
                 lineHeight = 0;
                 lineWidth = 0;
-                lineViews.clear();
+                lineViews = new ArrayList<>();
             }
 
             lineWidth += childWidth;
