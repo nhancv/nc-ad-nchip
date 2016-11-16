@@ -138,6 +138,7 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
         if (chipSplitFlag == null) chipSplitFlag = ",";
         showKeyboardInFocus = true;
         autoSplitInActionKey = true;
+        adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1);
 
         createNewChipLayout(null);
         setOnClickListener();
