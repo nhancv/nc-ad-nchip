@@ -536,60 +536,70 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
         for (TextWatcher tw : listTextWatcher) {
             autoCompleteTextView.addTextChangedListener(tw);
         }
+        if (chipEnableEdit) {
+            OnFocusChangeListener focusChangeListener = new ChipOnFocusChangeListener(this, chipLayoutDrawable, onFocusChangeListener);
+            autoCompleteTextView.setOnFocusChangeListener(focusChangeListener);
 
-        OnFocusChangeListener focusChangeListener = new ChipOnFocusChangeListener(this, chipLayoutDrawable, onFocusChangeListener);
-        autoCompleteTextView.setOnFocusChangeListener(focusChangeListener);
-
-        if (initFocus || getChildCount() > 0) {
-            autoCompleteTextView.requestFocus();
-        }
-
-        if (autoSplitInActionKey) {
-            autoCompleteTextView.setOnEditorActionListener(new ChipEditorActionListener(autoCompleteTextView, chipSplitFlag));
-        }
-        autoCompleteTextView.setAdapter(adapter);
-        if (chipDropdownWidth == 0) {
-            switch (displayMetrics.densityDpi) {
-                case DisplayMetrics.DENSITY_LOW:
-                    break;
-                case DisplayMetrics.DENSITY_MEDIUM:
-                    break;
-                case DisplayMetrics.DENSITY_HIGH:
-                    dropDownWidth = 280;
-                    break;
-                case DisplayMetrics.DENSITY_XHIGH:
-                    dropDownWidth = 300;
-                    break;
-                case DisplayMetrics.DENSITY_XXHIGH:
-                    dropDownWidth = 320;
-                    break;
-                case DisplayMetrics.DENSITY_560:
-                    dropDownWidth = 360;
-                    break;
+            if (initFocus || getChildCount() > 0) {
+                autoCompleteTextView.requestFocus();
             }
-        } else {
-            autoCompleteTextView.setDropDownAnchor(nchip.getId());
-            dropDownWidth = (int) chipDropdownWidth;
-        }
 
-        autoCompleteTextView.setDropDownWidth(dropDownWidth);
-        autoCompleteTextView.setDropDownVerticalOffset((int) chipDropdownTopOffset);
-        autoCompleteTextView.setDropDownHorizontalOffset((int) chipDropdownLeftOffset);
-
-        autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-                try {
-                    autoCompleteTextView.setTag(arg0.getAdapter().getItem(arg2));
-                    autoCompleteTextView.setText(autoCompleteTextView.getText().toString() + chipSplitFlag);
-                    if (onItemClickListener != null) {
-                        onItemClickListener.onItemClick(arg0, arg1, arg2, arg3);
-                    }
-                } catch (Exception ignored) {
+            if (autoSplitInActionKey) {
+                autoCompleteTextView.setOnEditorActionListener(new ChipEditorActionListener(autoCompleteTextView, chipSplitFlag));
+            }
+            autoCompleteTextView.setAdapter(adapter);
+            if (chipDropdownWidth == 0) {
+                switch (displayMetrics.densityDpi) {
+                    case DisplayMetrics.DENSITY_LOW:
+                        break;
+                    case DisplayMetrics.DENSITY_MEDIUM:
+                        break;
+                    case DisplayMetrics.DENSITY_HIGH:
+                        dropDownWidth = 280;
+                        break;
+                    case DisplayMetrics.DENSITY_XHIGH:
+                        dropDownWidth = 300;
+                        break;
+                    case DisplayMetrics.DENSITY_XXHIGH:
+                        dropDownWidth = 320;
+                        break;
+                    case DisplayMetrics.DENSITY_560:
+                        dropDownWidth = 360;
+                        break;
                 }
+            } else {
+                autoCompleteTextView.setDropDownAnchor(nchip.getId());
+                dropDownWidth = (int) chipDropdownWidth;
             }
-        });
 
+            autoCompleteTextView.setDropDownWidth(dropDownWidth);
+            autoCompleteTextView.setDropDownVerticalOffset((int) chipDropdownTopOffset);
+            autoCompleteTextView.setDropDownHorizontalOffset((int) chipDropdownLeftOffset);
+
+            autoCompleteTextView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+                    try {
+                        autoCompleteTextView.setTag(arg0.getAdapter().getItem(arg2));
+                        autoCompleteTextView.setText(autoCompleteTextView.getText().toString() + chipSplitFlag);
+                        if (onItemClickListener != null) {
+                            onItemClickListener.onItemClick(arg0, arg1, arg2, arg3);
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+        } else {
+            autoCompleteTextView.setFocusable(false);
+            autoCompleteTextView.setCursorVisible(false);
+            autoCompleteTextView.setFocusableInTouchMode(false);
+            autoCompleteTextView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    nchip.onClick(view);
+                }
+            });
+        }
 
         if (val != null) {
             autoCompleteTextView.setText(val.toString() + chipSplitFlag);
@@ -597,13 +607,6 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
             autoCompleteTextView.setHint(chipInitHint);
         }
 
-        if (!chipEnableEdit) {
-            autoCompleteTextView.setText(null);
-            autoCompleteTextView.setEnabled(false);
-            autoCompleteTextView.setFocusable(false);
-            autoCompleteTextView.setFocusableInTouchMode(false);
-
-        }
         return layout;
     }
 
@@ -788,14 +791,18 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public void setObjList(List<O> vals) {
-        this.removeAllViews();
-        for (O str : vals) {
-            try {
-                createNewChipLayout(str, true);
-            } catch (Exception ignored) {
-            }
+    public void addAll(List<O> vals) {
+        for (int i = 0; i < vals.size(); i++) {
+            O obj = vals.get(i);
+            addObj(obj);
         }
+    }
+
+    public void removeAll() {
+        removeAllViews();
+        getAdapter().clear();
+        createNewChipLayout(null);
+        updateHint();
     }
 
     public void removeChipAt(int pos) {
@@ -931,6 +938,14 @@ public class NChip<O> extends ViewGroup implements View.OnClickListener {
 
     public void setInitFocus(boolean initFocus) {
         this.initFocus = initFocus;
+    }
+
+    public boolean isChipEnableEdit() {
+        return chipEnableEdit;
+    }
+
+    public void setChipEnableEdit(boolean chipEnableEdit) {
+        this.chipEnableEdit = chipEnableEdit;
     }
 
     public int getChipTextColor() {

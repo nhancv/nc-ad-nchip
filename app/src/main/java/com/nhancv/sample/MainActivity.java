@@ -51,16 +51,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        List<Obj> list = new ArrayList<>();
+        final List<Obj> list = new ArrayList<>();
         list.add(new Obj(1, "test1"));
         list.add(new Obj(3, "test2"));
 
 //        final ArrayAdapter<Obj> adapter = new ArrayAdapter<>(chip.getContext(), android.R.layout.simple_list_item_1, list);
 //        chip.setAdapter(adapter);
 //        chip.addObj(list.get(0));
-        final CustomAdapter adapter = new CustomAdapter(chip.getContext(), list);
+        final CustomAdapter adapter = new CustomAdapter(chip.getContext(), new ArrayList<Obj>());
         chip.setAdapter(adapter);
-        chip.addObj(list.get(0));
+        chip.addAll(list);
         chip.setOnChipItemChangeListener(new NChip.ChipItemChangeListener<Obj>() {
             @Override
             public void onChipAdded(int pos, Obj data) {
@@ -96,6 +96,19 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }));
+
+
+        chip.setOnClickListener(new View.OnClickListener() {
+            boolean toggle = false;
+
+            @Override
+            public void onClick(View view) {
+                toggle = !toggle;
+                if (toggle)
+                    chip.removeAll();
+                else chip.addAll(list);
+            }
+        });
     }
 
 }
